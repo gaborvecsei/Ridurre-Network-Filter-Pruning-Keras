@@ -18,8 +18,8 @@ class BaseFilterPruning(callbacks.Callback):
         super().on_epoch_begin(epoch, logs)
         if epoch >= self.start_at_epoch:
             if self._current_finetuning_step >= self.finetune_for_epochs:
-                # TODO: do something with pruning dict
                 pruning_dict = self._run_pruning()
+                # TODO: Log pruned filters to Tensorboard
                 self._current_finetuning_step = 0
             else:
                 self._current_finetuning_step += 1
@@ -31,6 +31,7 @@ class BaseFilterPruning(callbacks.Callback):
                 if re.match(self.prunable_layers_regex, layer.name):
                     nb_pruned_filters = self.run_pruning_for_conv_layer(layer)
                     pruning_dict[layer.name] = nb_pruned_filters
+        return pruning_dict
 
     @abc.abstractmethod
     def run_pruning_for_conv_layer(self, layer) -> int:

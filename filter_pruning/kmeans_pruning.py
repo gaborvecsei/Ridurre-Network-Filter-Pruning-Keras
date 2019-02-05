@@ -1,6 +1,7 @@
 import numpy as np
-from keras import layers
-from sklearn import cluster
+from keras import layers, models
+from sklearn import cluster, metrics
+from kerassurgeon import operations
 
 from filter_pruning import base_pruning
 
@@ -31,10 +32,20 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
         kmeans = cluster.KMeans(nb_of_clusters, "k-means++")
 
         # Fit with the flattened weight matrix
+        # (height, width, input_channels, output_channels) -> (output_channels, flattened features)
         layer_weight_mtx_reshaped = layer_weight_mtx.transpose(3, 0, 1, 2).reshape(channels, -1)
+        # TODO: Should we transform data with PCA before clustering?
         kmeans.fit(layer_weight_mtx_reshaped)
 
-        # TODO: calculate which filters to prune
+        # If a cluster has only a single member, then that should not be pruned
+        # So that point will always be the closest to the cluster center
+        closest_point_to_cluster_center_indices = metrics.pairwise_distances_argmin(kmeans.cluster_centers_,
+                                                                                    layer_weight_mtx_reshaped)
+        # Compute filter indices which can be pruned
+        channel_indices_to_prune = set(np.arange(len(layer_weight_mtx_reshaped))).difference(
+            set(closest_point_to_cluster_center_indices))
 
-        # TODO: return number of pruned filters
-        return -1
+        # Remove "unnecessary" filters from layer
+        self.model = operations.delete_channels(self.model, layer, channel_indices_to_prune)
+
+        return len(channel_indices_to_prune)
