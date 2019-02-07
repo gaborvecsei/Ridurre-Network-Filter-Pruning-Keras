@@ -1,7 +1,9 @@
 import numpy as np
-from keras import layers, models
+from keras import layers
 from sklearn import cluster, metrics
 from kerassurgeon import operations
+import kerassurgeon
+import tensorflow as tf
 
 from filter_pruning import base_pruning
 
@@ -23,7 +25,7 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
 
         return nb_of_clusters
 
-    def run_pruning_for_conv_layer(self, layer: layers.Conv2D) -> int:
+    def run_pruning_for_conv_layer(self, layer: layers.Conv2D, surgeon:kerassurgeon.Surgeon) -> int:
         # Extract the Conv2D layer kernel weight matrix
         layer_weight_mtx = layer.get_weights()[0]
         height, width, input_channels, channels = layer_weight_mtx.shape
@@ -45,8 +47,9 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
         # Compute filter indices which can be pruned
         channel_indices_to_prune = set(np.arange(len(layer_weight_mtx_reshaped))).difference(
             set(closest_point_to_cluster_center_indices))
+        channel_indices_to_prune = list(channel_indices_to_prune)
 
         # Remove "unnecessary" filters from layer
-        self.model = operations.delete_channels(self.model, layer, channel_indices_to_prune)
+        surgeon.add_job("delete_channels", layer, channels=channel_indices_to_prune)
 
         return len(channel_indices_to_prune)

@@ -3,3 +3,4 @@ __pycache__
 test.py
 test_notebook.ipynb
 .ipynb_checkpoints
+train_logs/events.out*

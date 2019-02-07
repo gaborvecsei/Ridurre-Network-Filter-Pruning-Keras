@@ -7,7 +7,7 @@ from filter_pruning import kmeans_pruning
 from filter_pruning import model_complexity_calculation
 
 # Creating ResNet50 model
-model = resnet.resnet_v1((32, 32, 3), 44, 10)
+model = resnet.resnet_v1((32, 32, 3), 20, 10)
 model.compile(optimizer=optimizers.Adam(lr=0.001), loss=losses.categorical_crossentropy, metrics=["accuracy"])
 
 # Loading data
@@ -33,7 +33,9 @@ x_test -= x_train_mean
 # Define callbacks for the training
 TRAIN_LOGS_FOLDER_PATH = "./train_logs"
 
-kmeans_pruning_callback = kmeans_pruning.KMeansFilterPruning(0, 1, 0.9)
+kmeans_pruning_callback = kmeans_pruning.KMeansFilterPruning(start_at_epoch=1,
+                                                             fine_tune_for_epochs=1,
+                                                             clustering_factor=0.9)
 tensorboard_callback = callbacks.TensorBoard(log_dir=TRAIN_LOGS_FOLDER_PATH)
 model_complexity_param = model_complexity_calculation.ModelComplexityCallback(TRAIN_LOGS_FOLDER_PATH, K.get_session())
 
