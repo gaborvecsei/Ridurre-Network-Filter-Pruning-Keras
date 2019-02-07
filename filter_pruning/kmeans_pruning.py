@@ -7,9 +7,9 @@ from filter_pruning import base_pruning
 
 
 class KMeansFilterPruning(base_pruning.BaseFilterPruning):
-    def __init__(self, start_at_epoch: int, finetune_for_epochs: int, clustering_factor: float,
+    def __init__(self, start_at_epoch: int, fine_tune_for_epochs: int, clustering_factor: float,
                  prunable_layers_regex: str = ".*"):
-        super().__init__(start_at_epoch, finetune_for_epochs, prunable_layers_regex)
+        super().__init__(start_at_epoch, fine_tune_for_epochs, prunable_layers_regex)
 
         self.clustering_factor = clustering_factor
 
@@ -24,6 +24,7 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
         return nb_of_clusters
 
     def run_pruning_for_conv_layer(self, layer: layers.Conv2D) -> int:
+        # Extract the Conv2D layer kernel weight matrix
         layer_weight_mtx = layer.get_weights()[0]
         height, width, input_channels, channels = layer_weight_mtx.shape
 
@@ -38,7 +39,7 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
         kmeans.fit(layer_weight_mtx_reshaped)
 
         # If a cluster has only a single member, then that should not be pruned
-        # So that point will always be the closest to the cluster center
+        # so that point will always be the closest to the cluster center
         closest_point_to_cluster_center_indices = metrics.pairwise_distances_argmin(kmeans.cluster_centers_,
                                                                                     layer_weight_mtx_reshaped)
         # Compute filter indices which can be pruned

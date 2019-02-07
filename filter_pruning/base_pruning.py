@@ -5,19 +5,22 @@ from keras import callbacks
 
 
 class BaseFilterPruning(callbacks.Callback):
-    def __init__(self, start_at_epoch: int, finetune_for_epochs: int, prunable_layers_regex: str):
+    def __init__(self, start_at_epoch: int, fine_tune_for_epochs: int, prunable_layers_regex: str):
         super().__init__()
 
         self.start_at_epoch = start_at_epoch
-        self.finetune_for_epochs = finetune_for_epochs
+        self.fine_tune_for_epochs = fine_tune_for_epochs
         self.prunable_layers_regex = prunable_layers_regex
 
         self._current_finetuning_step = 0
 
     def on_epoch_begin(self, epoch, logs=None):
         super().on_epoch_begin(epoch, logs)
+
+        # TODO: stopping criteria (for example: accuracy difference from the initial state dropped by 2%)
+
         if epoch >= self.start_at_epoch:
-            if self._current_finetuning_step >= self.finetune_for_epochs:
+            if self._current_finetuning_step >= self.fine_tune_for_epochs:
                 pruning_dict = self._run_pruning()
                 # TODO: Log pruned filters to Tensorboard
                 self._current_finetuning_step = 0
@@ -25,6 +28,7 @@ class BaseFilterPruning(callbacks.Callback):
                 self._current_finetuning_step += 1
 
     def _run_pruning(self) -> dict:
+        print("Running filter pruning...")
         pruning_dict = dict()
         for layer in self.model.layers:
             if layer.__class__.__name__ == "Conv2D":
