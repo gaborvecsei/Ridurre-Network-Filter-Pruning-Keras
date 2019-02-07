@@ -12,12 +12,12 @@ class BaseFilterPruning(callbacks.Callback):
         self.fine_tune_for_epochs = fine_tune_for_epochs
         self.prunable_layers_regex = prunable_layers_regex
 
-        self._current_finetuning_step = 0
+        self._current_finetuning_step = fine_tune_for_epochs
 
     def on_epoch_begin(self, epoch, logs=None):
         super().on_epoch_begin(epoch, logs)
 
-        # TODO: stopping criteria (for example: accuracy difference from the initial state dropped by 2%)
+        # TODO: pruning stopping criteria (for example: accuracy difference from the initial state dropped by 2%)
 
         if epoch >= self.start_at_epoch:
             if self._current_finetuning_step >= self.fine_tune_for_epochs:
