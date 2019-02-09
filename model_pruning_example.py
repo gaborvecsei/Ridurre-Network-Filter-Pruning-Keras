@@ -37,6 +37,9 @@ x_test = x_test.astype(np.float32) / 255.0
 y_test = utils.to_categorical(y_test)
 x_test -= x_train_mean
 
+x_train = x_train[:100]
+y_train = y_train[:100]
+
 print("Train shape: X {0}, y: {1}".format(x_train.shape, y_train.shape))
 print("Test shape: X {0}, y: {1}".format(x_test.shape, y_test.shape))
 
@@ -45,8 +48,8 @@ data_generator = ImageDataGenerator(horizontal_flip=True, vertical_flip=True, ro
 
 # Create callbacks
 tensorboard_callback = callbacks.TensorBoard(log_dir=str(TRAIN_LOGS_FOLDER_PATH))
-model_complexity_param = graph_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH)
-model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH) + "/model_{epoch}.h5",
+model_complexity_param = graph_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH, verbose=1)
+model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH) + "/model_{epoch:02d}.h5",
                                                       save_best_only=False,
                                                       save_weights_only=False,
                                                       verbose=1)
