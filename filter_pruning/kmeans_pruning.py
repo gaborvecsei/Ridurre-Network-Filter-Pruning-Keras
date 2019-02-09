@@ -1,10 +1,9 @@
 from typing import Callable
 
-from keras import models
-from sklearn import cluster, metrics
-
 import kerassurgeon
 import numpy as np
+from keras import models
+from sklearn import cluster, metrics
 
 from filter_pruning import base_filter_pruning
 

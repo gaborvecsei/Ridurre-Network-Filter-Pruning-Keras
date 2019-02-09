@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Union, Tuple
 
 import tensorflow as tf
+from keras import backend as K
 from keras import callbacks
 from swiss_army_tensorboard import tfboard_loggers
 
@@ -42,3 +43,24 @@ class ModelComplexityCallback(callbacks.Callback):
         if self._verbose > 0:
             print("FLOPS at epoch {0}: {1:,}".format(epoch, flops))
             print("Number of PARAMS at epoch {0}: {1:,}".format(epoch, params))
+
+
+class ModelParametersCallback(callbacks.Callback):
+    def __init__(self, log_dir: Union[str, Path], sub_folder: str = "parameters", verbose: int = 0):
+        super().__init__()
+
+        log_dir = str(log_dir) + "/" + sub_folder
+        self._params_logger = tfboard_loggers.TFBoardScalarLogger(log_dir)
+        self._verbose = verbose
+
+    def on_epoch_end(self, epoch, logs=None):
+        super().on_epoch_end(epoch, logs)
+
+        trainable_count = K.count_params(self.model.trainable_weights)
+        non_trainable_count = K.count_params(self.model.non_trainable_weights)
+        self._params_logger.log_scalar("trainable_parameters", trainable_count, epoch)
+        self._params_logger.log_scalar("non_trainable_parameters", non_trainable_count, epoch)
+
+        if self._verbose > 0:
+            print("Trainable PARAMS at epoch {0}: {1:,}".format(epoch, trainable_count))
+            print("Non trainable PARAMS at epoch {0}: {1:,}".format(epoch, non_trainable_count))

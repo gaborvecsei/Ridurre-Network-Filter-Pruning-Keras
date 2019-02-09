@@ -1,11 +1,13 @@
-from pathlib import Path
 import shutil
-from keras import backend as K
-from cifar_10_resnet import resnet
-from keras import datasets, utils, callbacks, optimizers, losses
+from pathlib import Path
+
 import numpy as np
-from model_complexity import graph_complexity
+from keras import datasets, utils, callbacks, optimizers, losses
+from keras.preprocessing.image import ImageDataGenerator
+
+from cifar_10_resnet import resnet
 from filter_pruning import kmeans_pruning
+from model_complexity import graph_complexity
 
 TRAIN_LOGS_FOLDER_PATH = Path("./train_logs")
 if TRAIN_LOGS_FOLDER_PATH.is_dir():
@@ -25,13 +27,6 @@ compile_model(model)
 # Loading data
 (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
 
-# TODO: this is only for testing
-# nb_data_points = 100
-# x_train = x_train[:nb_data_points]
-# y_train = y_train[:nb_data_points]
-# x_test = x_test[:nb_data_points]
-# y_test = y_test[:nb_data_points]
-
 # Data Transform
 x_train = x_train.astype(np.float32) / 255.0
 y_train = utils.to_categorical(y_train)
@@ -45,9 +40,12 @@ x_test -= x_train_mean
 print("Train shape: X {0}, y: {1}".format(x_train.shape, y_train.shape))
 print("Test shape: X {0}, y: {1}".format(x_test.shape, y_test.shape))
 
+# Data Augmentation with Data Generator
+data_generator = ImageDataGenerator(horizontal_flip=True, vertical_flip=True, rotation_range=20)
+
 # Create callbacks
 tensorboard_callback = callbacks.TensorBoard(log_dir=str(TRAIN_LOGS_FOLDER_PATH))
-model_complexity_param = graph_complexity.ModelComplexityCallback(TRAIN_LOGS_FOLDER_PATH, K.get_session())
+model_complexity_param = graph_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH)
 model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH) + "/model_{epoch}.h5",
                                                       save_best_only=False,
                                                       save_weights_only=False,
@@ -55,15 +53,24 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH
 callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
 
 # Train the model
-EPOCHS = 5
-model.fit(x_train, y_train, 32, epochs=EPOCHS, validation_data=(x_test, y_test), callbacks=callbacks)
+EPOCHS = 3
+BATCH_SIZE = 64
+STEPS_PER_EPOCH = len(x_train) // BATCH_SIZE
+
+model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=EPOCHS, validation_data=(x_test, y_test),
+                    callbacks=callbacks, steps_per_epoch=STEPS_PER_EPOCH)
 
 
 # Prune the model
 def finetune_model(my_model, initial_epoch, finetune_epochs):
-    my_model.fit(x_train, y_train, 32, epochs=finetune_epochs, validation_data=(x_test, y_test), callbacks=callbacks,
-                 initial_epoch=initial_epoch, verbose=1)
+    my_model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=finetune_epochs,
+                           validation_data=(x_test, y_test), callbacks=callbacks, initial_epoch=initial_epoch,
+                           verbose=1, steps_per_epoch=STEPS_PER_EPOCH)
 
 
-pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, EPOCHS, 1)
+pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, 1, EPOCHS)
 pruning.run_pruning(model)
+
+# Train again for a reasonable number of epochs
+model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=10, validation_data=(x_test, y_test),
+                    callbacks=callbacks, steps_per_epoch=STEPS_PER_EPOCH)
