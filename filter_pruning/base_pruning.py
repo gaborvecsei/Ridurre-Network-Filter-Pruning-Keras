@@ -41,9 +41,15 @@ class BaseFilterPruning(callbacks.Callback):
                 if re.match(self.prunable_layers_regex, layer.name):
                     nb_pruned_filters = self.run_pruning_for_conv_layer(layer, surgeon)
                     pruning_dict[layer.name] = nb_pruned_filters
-        self.model = surgeon.operate()
-        self._model_compile_function(self.model)
+        new_model = surgeon.operate()
+
+        new_model.save("asdasd.h5")
+        del self.model
+        # K.clear_session()
         tf.reset_default_graph()
+
+        self.model = models.load_model("asdasd.h5")
+        self._model_compile_function(self.model)
         return pruning_dict
 
     @abc.abstractmethod
