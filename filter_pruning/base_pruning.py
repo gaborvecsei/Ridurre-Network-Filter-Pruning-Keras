@@ -1,13 +1,15 @@
 import abc
 import re
 import tensorflow as tf
-
-from keras import callbacks
+from typing import Callable
+from keras import callbacks, models
+from keras import backend as K
 import kerassurgeon
 
 
 class BaseFilterPruning(callbacks.Callback):
-    def __init__(self, start_at_epoch: int, fine_tune_for_epochs: int, prunable_layers_regex: str):
+    def __init__(self, start_at_epoch: int, fine_tune_for_epochs: int, prunable_layers_regex: str,
+                 model_compile_fn: Callable[[models.Model], None]):
         super().__init__()
 
         self.start_at_epoch = start_at_epoch
@@ -15,6 +17,7 @@ class BaseFilterPruning(callbacks.Callback):
         self.prunable_layers_regex = prunable_layers_regex
 
         self._current_finetuning_step = fine_tune_for_epochs
+        self._model_compile_function = model_compile_fn
 
     def on_epoch_begin(self, epoch, logs=None):
         super().on_epoch_begin(epoch, logs)
@@ -31,15 +34,16 @@ class BaseFilterPruning(callbacks.Callback):
 
     def _run_pruning(self) -> dict:
         print("Running filter pruning...")
-        surgeon = kerassurgeon.Surgeon(self.model)
+        surgeon = kerassurgeon.Surgeon(self.model, copy=True)
         pruning_dict = dict()
         for layer in self.model.layers:
             if layer.__class__.__name__ == "Conv2D":
                 if re.match(self.prunable_layers_regex, layer.name):
                     nb_pruned_filters = self.run_pruning_for_conv_layer(layer, surgeon)
                     pruning_dict[layer.name] = nb_pruned_filters
-        # tf.reset_default_graph()
         self.model = surgeon.operate()
+        self._model_compile_function(self.model)
+        tf.reset_default_graph()
         return pruning_dict
 
     @abc.abstractmethod

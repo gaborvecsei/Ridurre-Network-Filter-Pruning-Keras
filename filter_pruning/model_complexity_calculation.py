@@ -1,31 +1,44 @@
+from pathlib import Path
+from typing import Union, Tuple
+
 import tensorflow as tf
 from keras import callbacks
 from swiss_army_tensorboard import tfboard_loggers
 
 
-def calculate_flops_and_parameters(model_session):
+def calculate_flops_and_parameters(model_session: tf.Session, verbose: int = 0) -> Tuple[int, int]:
+    profiler_output = "stdout" if verbose > 0 else "none"
+
     run_meta = tf.RunMetadata()
 
-    opts = tf.profiler.ProfileOptionBuilder.float_operation()
-    flops = tf.profiler.profile(model_session.graph, run_meta=run_meta, cmd='op', options=opts)
+    opts_dict = tf.profiler.ProfileOptionBuilder.float_operation()
+    opts_dict["output"] = profiler_output
+    flops = tf.profiler.profile(model_session.graph, run_meta=run_meta, cmd='op', options=opts_dict)
 
-    opts = tf.profiler.ProfileOptionBuilder.trainable_variables_parameter()
-    params = tf.profiler.profile(model_session.graph, run_meta=run_meta, cmd='op', options=opts)
+    opts_dict = tf.profiler.ProfileOptionBuilder.trainable_variables_parameter()
+    opts_dict["output"] = profiler_output
+    params = tf.profiler.profile(model_session.graph, run_meta=run_meta, cmd='op', options=opts_dict)
 
     return flops.total_float_ops, params.total_parameters
 
 
 class ModelComplexityCallback(callbacks.Callback):
-    def __init__(self, log_dir: str, model_session: tf.Session):
+    def __init__(self, log_dir: Union[str, Path], model_session: tf.Session, verbose: int = 1):
         super().__init__()
 
-        self.flops_logger = tfboard_loggers.TFBoardScalarLogger(log_dir + "/flops")
-        self.params_logger = tfboard_loggers.TFBoardScalarLogger(log_dir + "/params")
-        self.model_session = model_session
+        log_dir = str(log_dir)
+        self._flops_logger = tfboard_loggers.TFBoardScalarLogger(log_dir + "/flops")
+        self._params_logger = tfboard_loggers.TFBoardScalarLogger(log_dir + "/params")
+        self._model_session = model_session
+        self._verbose = verbose
 
     def on_epoch_end(self, epoch, logs=None):
         super().on_epoch_end(epoch, logs)
 
-        flops, params = calculate_flops_and_parameters(self.model_session)
-        self.flops_logger.log_scalar("model_flops", flops, epoch)
-        self.params_logger.log_scalar("model_params", params, epoch)
+        flops, params = calculate_flops_and_parameters(self._model_session, verbose=0)
+        self._flops_logger.log_scalar("model_flops", flops, epoch)
+        self._params_logger.log_scalar("model_params", params, epoch)
+
+        if self._verbose > 0:
+            print("FLOPS: {0:,}".format(flops))
+            print("Number of PARAMS: {0:,}".format(params))

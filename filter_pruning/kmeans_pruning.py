@@ -1,5 +1,7 @@
+from typing import Callable
+
 import numpy as np
-from keras import layers
+from keras import layers, models
 from sklearn import cluster, metrics
 from kerassurgeon import operations
 import kerassurgeon
@@ -10,8 +12,9 @@ from filter_pruning import base_pruning
 
 class KMeansFilterPruning(base_pruning.BaseFilterPruning):
     def __init__(self, start_at_epoch: int, fine_tune_for_epochs: int, clustering_factor: float,
+                 model_compile_fn: Callable[[models.Model], None],
                  prunable_layers_regex: str = ".*"):
-        super().__init__(start_at_epoch, fine_tune_for_epochs, prunable_layers_regex)
+        super().__init__(start_at_epoch, fine_tune_for_epochs, prunable_layers_regex, model_compile_fn)
 
         self.clustering_factor = clustering_factor
 
@@ -25,7 +28,7 @@ class KMeansFilterPruning(base_pruning.BaseFilterPruning):
 
         return nb_of_clusters
 
-    def run_pruning_for_conv_layer(self, layer: layers.Conv2D, surgeon:kerassurgeon.Surgeon) -> int:
+    def run_pruning_for_conv_layer(self, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon) -> int:
         # Extract the Conv2D layer kernel weight matrix
         layer_weight_mtx = layer.get_weights()[0]
         height, width, input_channels, channels = layer_weight_mtx.shape
