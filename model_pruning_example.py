@@ -4,7 +4,7 @@ from keras import backend as K
 from cifar_10_resnet import resnet
 from keras import datasets, utils, callbacks, optimizers, losses
 import numpy as np
-from filter_pruning import graph_complexity
+from model_complexity import graph_complexity
 from filter_pruning import kmeans_pruning
 
 TRAIN_LOGS_FOLDER_PATH = Path("./train_logs")
@@ -26,11 +26,11 @@ compile_model(model)
 (x_train, y_train), (x_test, y_test) = datasets.cifar10.load_data()
 
 # TODO: this is only for testing
-nb_data_points = 100
-x_train = x_train[:nb_data_points]
-y_train = y_train[:nb_data_points]
-x_test = x_test[:nb_data_points]
-y_test = y_test[:nb_data_points]
+# nb_data_points = 100
+# x_train = x_train[:nb_data_points]
+# y_train = y_train[:nb_data_points]
+# x_test = x_test[:nb_data_points]
+# y_test = y_test[:nb_data_points]
 
 # Data Transform
 x_train = x_train.astype(np.float32) / 255.0
@@ -42,6 +42,9 @@ x_test = x_test.astype(np.float32) / 255.0
 y_test = utils.to_categorical(y_test)
 x_test -= x_train_mean
 
+print("Train shape: X {0}, y: {1}".format(x_train.shape, y_train.shape))
+print("Test shape: X {0}, y: {1}".format(x_test.shape, y_test.shape))
+
 # Create callbacks
 tensorboard_callback = callbacks.TensorBoard(log_dir=str(TRAIN_LOGS_FOLDER_PATH))
 model_complexity_param = graph_complexity.ModelComplexityCallback(TRAIN_LOGS_FOLDER_PATH, K.get_session())
@@ -52,7 +55,8 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH
 callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
 
 # Train the model
-model.fit(x_train, y_train, 32, epochs=1, validation_data=(x_test, y_test), callbacks=callbacks)
+EPOCHS = 5
+model.fit(x_train, y_train, 32, epochs=EPOCHS, validation_data=(x_test, y_test), callbacks=callbacks)
 
 
 # Prune the model
@@ -61,5 +65,5 @@ def finetune_model(my_model, initial_epoch, finetune_epochs):
                  initial_epoch=initial_epoch, verbose=1)
 
 
-pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, 1, 1)
+pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, EPOCHS, 1)
 pruning.run_pruning(model)
