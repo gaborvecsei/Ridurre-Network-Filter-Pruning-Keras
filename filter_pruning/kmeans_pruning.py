@@ -11,7 +11,7 @@ from filter_pruning import base_filter_pruning
 
 class KMeansFilterPruning(base_filter_pruning.BasePruning):
     def __init__(self, clustering_factor: float, model_compile_fn: Callable[[models.Model], None],
-                 model_finetune_fn: Callable[[models.Model], None], nb_finetune_epochs: int,
+                 model_finetune_fn: Callable[[models.Model, int, int], None], nb_finetune_epochs: int,
                  nb_trained_for_epochs: int = 0, prunable_layers_regex: str = ".*"):
         super().__init__(prunable_layers_regex, model_compile_fn, model_finetune_fn, nb_finetune_epochs,
                          nb_trained_for_epochs)

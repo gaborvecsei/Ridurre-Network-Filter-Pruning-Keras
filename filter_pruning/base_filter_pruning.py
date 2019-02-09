@@ -13,14 +13,14 @@ import kerassurgeon
 class BasePruning:
     def __init__(self, prunable_layers_regex: str,
                  model_compile_fn: Callable[[models.Model], None],
-                 model_finetune_fn: Callable[[models.Model, int], None], nb_finetune_epochs: int,
+                 model_finetune_fn: Callable[[models.Model, int, int], None], nb_finetune_epochs: int,
                  nb_trained_for_epochs: int):
-        self.prunable_layers_regex = prunable_layers_regex
+        self._prunable_layers_regex = prunable_layers_regex
 
         self._tmp_model_file_name = tempfile.NamedTemporaryFile().name
 
         self._model_compile_fn = model_compile_fn
-        self._model_fitting_fn = model_finetune_fn
+        self._model_finetune_fn = model_finetune_fn
 
         self._nb_finetune_epochs = nb_finetune_epochs
         self._current_nb_of_epochs = nb_trained_for_epochs
@@ -34,7 +34,8 @@ class BasePruning:
             self._clean_up_after_pruning(model)
             model = self._load_back_saved_model()
             self._model_compile_fn(model)
-            self._model_fitting_fn(model, self._current_nb_of_epochs)
+            self._model_finetune_fn(model, self._current_nb_of_epochs,
+                                    self._current_nb_of_epochs + self._nb_finetune_epochs)
             self._current_nb_of_epochs += self._nb_finetune_epochs
 
     def _prune(self, model: models.Model) -> Tuple[models.Model, dict]:
@@ -42,7 +43,7 @@ class BasePruning:
         pruning_dict = dict()
         for layer in model.layers:
             if layer.__class__.__name__ == "Conv2D":
-                if re.match(self.prunable_layers_regex, layer.name):
+                if re.match(self._prunable_layers_regex, layer.name):
                     nb_pruned_filters = self.run_pruning_for_conv2d_layer(layer, surgeon)
                     pruning_dict[layer.name] = nb_pruned_filters
         new_model = surgeon.operate()

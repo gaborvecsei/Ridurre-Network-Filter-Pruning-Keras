@@ -16,8 +16,8 @@ TRAIN_LOGS_FOLDER_PATH.mkdir()
 model = resnet.resnet_v1((32, 32, 3), 20, 10)
 
 
-def compile_model(model):
-    model.compile(optimizer=optimizers.Adam(lr=0.001), loss=losses.categorical_crossentropy, metrics=["accuracy"])
+def compile_model(my_model):
+    my_model.compile(optimizer=optimizers.Adam(lr=0.001), loss=losses.categorical_crossentropy, metrics=["accuracy"])
 
 
 compile_model(model)
@@ -52,14 +52,14 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH
 callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
 
 # Train the model
-model.fit(x_train, y_train, 32, epochs=3, validation_data=(x_test, y_test), callbacks=callbacks)
+model.fit(x_train, y_train, 32, epochs=1, validation_data=(x_test, y_test), callbacks=callbacks)
 
 
 # Prune the model
-def finetune_model(model, initial_epoch):
-    model.fit(x_train, y_train, 32, epochs=1, validation_data=(x_test, y_test), callbacks=callbacks,
-              initial_epoch=initial_epoch)
+def finetune_model(my_model, initial_epoch, finetune_epochs):
+    my_model.fit(x_train, y_train, 32, epochs=finetune_epochs, validation_data=(x_test, y_test), callbacks=callbacks,
+                 initial_epoch=initial_epoch, verbose=1)
 
 
-pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, 1, 3)
+pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, 1, 1)
 pruning.run_pruning(model)
