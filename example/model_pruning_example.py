@@ -5,9 +5,9 @@ import numpy as np
 from keras import datasets, utils, callbacks, optimizers, losses
 from keras.preprocessing.image import ImageDataGenerator
 
-from cifar_10_resnet import resnet
+from example.cifar_10_resnet import resnet
 from filter_pruning import kmeans_pruning
-from model_complexity import graph_complexity
+from filter_pruning.model_complexity import graph_complexity
 
 TRAIN_LOGS_FOLDER_PATH = Path("./train_logs")
 if TRAIN_LOGS_FOLDER_PATH.is_dir():
