@@ -7,7 +7,7 @@ from keras import models, layers
 from filter_pruning import base_filter_pruning
 
 
-class KMeansFilterPruning(base_filter_pruning.BasePruning):
+class RandomFilterPruning(base_filter_pruning.BasePruning):
     def __init__(self, removal_factor: float,
                  model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],

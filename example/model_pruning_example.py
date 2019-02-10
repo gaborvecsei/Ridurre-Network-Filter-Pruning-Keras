@@ -5,9 +5,9 @@ import numpy as np
 from keras import datasets, utils, callbacks, optimizers, losses
 from keras.preprocessing.image import ImageDataGenerator
 
+import filter_pruning
 from example.cifar_10_resnet import resnet
-from filter_pruning import kmeans_pruning
-from filter_pruning.model_complexity import graph_complexity
+from filter_pruning import model_complexity
 
 TRAIN_LOGS_FOLDER_PATH = Path("./train_logs")
 if TRAIN_LOGS_FOLDER_PATH.is_dir():
@@ -50,7 +50,7 @@ data_generator = ImageDataGenerator(horizontal_flip=True, vertical_flip=True, ro
 
 # Create callbacks
 tensorboard_callback = callbacks.TensorBoard(log_dir=str(TRAIN_LOGS_FOLDER_PATH))
-model_complexity_param = graph_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH, verbose=1)
+model_complexity_param = model_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH, verbose=1)
 model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH) + "/model_{epoch:02d}.h5",
                                                       save_best_only=False,
                                                       save_weights_only=False,
@@ -77,7 +77,7 @@ def finetune_model(my_model, initial_epoch, finetune_epochs):
                            steps_per_epoch=STEPS_PER_EPOCH)
 
 
-pruning = kmeans_pruning.KMeansFilterPruning(0.9,
+pruning = filter_pruning.KMeansFilterPruning(0.9,
                                              compile_model,
                                              finetune_model,
                                              1,
