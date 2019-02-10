@@ -37,6 +37,11 @@ x_test = x_test.astype(np.float32) / 255.0
 y_test = utils.to_categorical(y_test)
 x_test -= x_train_mean
 
+x_train = x_train[:100]
+y_train = y_train[:100]
+x_test = x_test[:100]
+y_test = y_test[:100]
+
 print("Train shape: X {0}, y: {1}".format(x_train.shape, y_train.shape))
 print("Test shape: X {0}, y: {1}".format(x_test.shape, y_test.shape))
 
@@ -53,7 +58,7 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH
 callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
 
 # Train the model
-EPOCHS = 3
+EPOCHS = 1
 BATCH_SIZE = 64
 STEPS_PER_EPOCH = len(x_train) // BATCH_SIZE
 
@@ -63,14 +68,28 @@ model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=EP
 
 # Prune the model
 def finetune_model(my_model, initial_epoch, finetune_epochs):
-    my_model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=finetune_epochs,
-                           validation_data=(x_test, y_test), callbacks=callbacks, initial_epoch=initial_epoch,
-                           verbose=1, steps_per_epoch=STEPS_PER_EPOCH)
+    my_model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE),
+                           epochs=finetune_epochs,
+                           validation_data=(x_test, y_test),
+                           callbacks=callbacks,
+                           initial_epoch=initial_epoch,
+                           verbose=1,
+                           steps_per_epoch=STEPS_PER_EPOCH)
 
 
-pruning = kmeans_pruning.KMeansFilterPruning(0.9, compile_model, finetune_model, 1, EPOCHS)
-pruning.run_pruning(model)
+pruning = kmeans_pruning.KMeansFilterPruning(0.9,
+                                             compile_model,
+                                             finetune_model,
+                                             1,
+                                             maximum_pruning_percent=0.2,
+                                             maximum_prune_iterations=3,
+                                             nb_trained_for_epochs=EPOCHS)
+model, last_epoch_number = pruning.run_pruning(model)
 
-# Train again for a reasonable number of epochs
-model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE), epochs=10, validation_data=(x_test, y_test),
-                    callbacks=callbacks, steps_per_epoch=STEPS_PER_EPOCH)
+# Train again for a reasonable number of epochs (no always necessary)
+model.fit_generator(data_generator.flow(x_train, y_train, BATCH_SIZE),
+                    epochs=last_epoch_number + 10,
+                    validation_data=(x_test, y_test),
+                    callbacks=callbacks,
+                    steps_per_epoch=STEPS_PER_EPOCH,
+                    initial_epoch=last_epoch_number)
