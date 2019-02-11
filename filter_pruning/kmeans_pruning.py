@@ -13,7 +13,7 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
                  model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
-                 maximum_prune_iterations: int=None,
+                 maximum_prune_iterations: int = None,
                  maximum_pruning_percent: float = 0.9,
                  nb_trained_for_epochs: int = 0):
         super().__init__(model_compile_fn=model_compile_fn,
@@ -47,7 +47,8 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         # Fit with the flattened weight matrix
         # (height, width, input_channels, output_channels) -> (output_channels, flattened features)
         layer_weight_mtx_reshaped = layer_weight_mtx.transpose(3, 0, 1, 2).reshape(channels, -1)
-        # TODO: Should we transform data with PCA before clustering?
+        # Apply some fuzz to the weights, to avoid duplicates
+        self._apply_fuzz(layer_weight_mtx_reshaped)
         kmeans.fit(layer_weight_mtx_reshaped)
 
         # If a cluster has only a single member, then that should not be pruned

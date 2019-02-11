@@ -7,9 +7,12 @@ import kerassurgeon
 import tensorflow as tf
 from keras import backend as K
 from keras import models
+import numpy as np
 
 
 class BasePruning:
+    _FUZZ_EPSILON = 1e-7
+
     def __init__(self, model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
@@ -114,6 +117,22 @@ class BasePruning:
     def _load_back_saved_model(self) -> models.Model:
         model = models.load_model(self._tmp_model_file_name)
         return model
+
+    @staticmethod
+    def _apply_fuzz_to_vector(x: np.ndarray):
+        # Prepare the vector element indices
+        indices = np.arange(0, len(x), dtype=int)
+        np.random.shuffle(indices)
+        # Select the indices to be modified (always modify only N-1 values)
+        nb_of_values_to_modify = np.random.randint(0, len(x) - 1)
+        modify_indices = indices[:nb_of_values_to_modify]
+        # Modify the selected elements of the vector
+        x[modify_indices] += BasePruning._FUZZ_EPSILON
+
+    @staticmethod
+    def _apply_fuzz(x: np.ndarray):
+        for i in range(len(x)):
+            BasePruning._apply_fuzz_to_vector(x[i])
 
     @abc.abstractmethod
     def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
