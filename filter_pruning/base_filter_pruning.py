@@ -35,7 +35,7 @@ class BasePruning:
         # TODO: select a subset of layers to prune
         self._prunable_layers_regex = ".*"
 
-    def run_pruning(self, model: models.Model) -> Tuple[models.Model, int]:
+    def run_pruning(self, model: models.Model, custom_objects_inside_model: dict = None) -> Tuple[models.Model, int]:
         self._original_number_of_filters = self._count_number_of_filters(model)
 
         pruning_iteration = 0
@@ -54,7 +54,7 @@ class BasePruning:
             # Finetune step
             self._save_after_pruning(model)
             self._clean_up_after_pruning(model)
-            model = self._load_back_saved_model()
+            model = self._load_back_saved_model(custom_objects_inside_model)
             self._model_compile_fn(model)
             self._model_finetune_fn(model, self._current_nb_of_epochs,
                                     self._current_nb_of_epochs + self._nb_finetune_epochs)
@@ -106,7 +106,7 @@ class BasePruning:
         return left_filters_percent
 
     def _save_after_pruning(self, model: models.Model):
-        model.save(self._tmp_model_file_name)
+        model.save(self._tmp_model_file_name, overwrite=True, include_optimizer=True)
 
     @staticmethod
     def _clean_up_after_pruning(model: models.Model):
@@ -114,8 +114,8 @@ class BasePruning:
         K.clear_session()
         tf.reset_default_graph()
 
-    def _load_back_saved_model(self) -> models.Model:
-        model = models.load_model(self._tmp_model_file_name)
+    def _load_back_saved_model(self, custom_objects: dict) -> models.Model:
+        model = models.load_model(self._tmp_model_file_name, custom_objects=custom_objects)
         return model
 
     @staticmethod
