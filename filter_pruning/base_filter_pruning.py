@@ -142,6 +142,23 @@ class BasePruning:
     def set_epsilon(e: float):
         BasePruning._FUZZ_EPSILON = e
 
+    @staticmethod
+    def _calculate_number_of_channels_to_keep(keep_factor: float, nb_of_channels: int) -> Tuple[int, int]:
+        # This is the number of channels we would like to keep
+        new_nb_of_channels = int(np.ceil(nb_of_channels * keep_factor))
+
+        if new_nb_of_channels > nb_of_channels:
+            # This happens when (factor > 1)
+            new_nb_of_channels = nb_of_channels
+        elif new_nb_of_channels < 1:
+            # This happens when (factor <= 0)
+            new_nb_of_channels = 1
+
+        # Number of channels which will be removed
+        nb_channels_to_remove = nb_of_channels - new_nb_of_channels
+
+        return new_nb_of_channels, nb_channels_to_remove
+
     @abc.abstractmethod
     def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
         raise NotImplementedError

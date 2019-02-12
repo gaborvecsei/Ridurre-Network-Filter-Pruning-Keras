@@ -12,7 +12,14 @@ TODO...
 
 ## Usage
 
-### Filter Pruning
+### Define you own pruning method
+
+You can make your own pruning method by creating a new class which has the parent `BasePruning`. There is only 1 thing
+you should take care and that the implementation of the `run_pruning_for_conv2d_layer` function.
+
+For an example just take a look at the [`RandomFilterPruning`](/filter_pruning/random_pruning.py) code.
+
+### Use an already existing method
 
 Check out the [`example/model_pruning_example.py`](/example/model_pruning_example.py) for a simple but
 extensive tutorial
@@ -89,12 +96,18 @@ model, _ = pruning.run_pruning(model)
 At the end of the pruning step, you will have a trained and pruned model which you can use.
 I can recommend to train your model after the pruning for just a little longer as an extra step towards accuracy.
 
-### Define you own pruning method
+## Future work
 
-You can make your own pruning method by creating a new class which has the parent `BasePruning`. There is only 1 thing
-you should take care and that the implementation of the `run_pruning_for_conv2d_layer` function.
-
-For an example just take a look at the [`RandomFilterPruning`](/filter_pruning/random_pruning.py) code.
+- Look for problematic cases, where there is a merging (like `add`) and warn the user that the different inputs to that
+operations should be pruned in the same manner
+    - A good example for a case like this is *ResNet*
+- Define "pruneable" set of layers
+    - With regex or layer indices
+    - This needs to find `add`, `multiply`, `average`, etc... operations (layers) which needs same filter number
+    from the different inputs
+- Different pruning factors for channels with different number of filters
+- More pruning solutions
+- Do not depend on kerassurgeon as I only use the channel delete function
 
 ## Papers
 

@@ -25,28 +25,18 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
 
         self._clustering_factor = clustering_factor
 
-    def _calculate_nb_of_clusters(self, nb_of_channels) -> int:
-        nb_of_clusters = int(np.ceil(nb_of_channels * self._clustering_factor))
-
-        if nb_of_clusters >= nb_of_channels:
-            nb_of_clusters = nb_of_channels - 1
-        elif nb_of_clusters < 2:
-            nb_of_clusters = 2
-
-        return nb_of_clusters
-
     def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
         # Extract the Conv2D layer kernel weight matrix
         layer_weight_mtx = layer.get_weights()[0]
-        height, width, input_channels, channels = layer_weight_mtx.shape
+        height, width, input_channels, nb_channels = layer_weight_mtx.shape
 
         # Initialize KMeans
-        nb_of_clusters = self._calculate_nb_of_clusters(channels)
+        nb_of_clusters = self._calculate_number_of_channels_to_keep(self._clustering_factor, nb_channels)
         kmeans = cluster.KMeans(nb_of_clusters, "k-means++")
 
         # Fit with the flattened weight matrix
         # (height, width, input_channels, output_channels) -> (output_channels, flattened features)
-        layer_weight_mtx_reshaped = layer_weight_mtx.transpose(3, 0, 1, 2).reshape(channels, -1)
+        layer_weight_mtx_reshaped = layer_weight_mtx.transpose(3, 0, 1, 2).reshape(nb_channels, -1)
         # Apply some fuzz to the weights, to avoid duplicates
         self._apply_fuzz(layer_weight_mtx_reshaped)
         kmeans.fit(layer_weight_mtx_reshaped)
@@ -56,9 +46,9 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         closest_point_to_cluster_center_indices = metrics.pairwise_distances_argmin(kmeans.cluster_centers_,
                                                                                     layer_weight_mtx_reshaped)
         # Compute filter indices which can be pruned
-        channel_indices_to_prune = set(np.arange(len(layer_weight_mtx_reshaped))).difference(
-            set(closest_point_to_cluster_center_indices))
-        channel_indices_to_prune = list(channel_indices_to_prune)
+        channel_indices = set(np.arange(len(layer_weight_mtx_reshaped)))
+        channel_indices_to_keep = set(closest_point_to_cluster_center_indices)
+        channel_indices_to_prune = list(channel_indices.difference(channel_indices_to_keep))
 
         # Remove "unnecessary" filters from layer
         surgeon.add_job("delete_channels", layer, channels=channel_indices_to_prune)

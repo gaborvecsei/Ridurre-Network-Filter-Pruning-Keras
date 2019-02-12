@@ -12,8 +12,8 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
                  model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
-                 maximum_prune_iterations: int=None,
-                 maximum_pruning_percent: float=0.9,
+                 maximum_prune_iterations: int = None,
+                 maximum_pruning_percent: float = 0.9,
                  nb_trained_for_epochs: int = 0):
         super().__init__(model_compile_fn=model_compile_fn,
                          model_finetune_fn=model_finetune_fn,
@@ -35,10 +35,7 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
             return 0
 
         # Calculate how much filters should be removed
-        nb_of_filters_to_remove = int(np.ceil(nb_channels * self._removal_factor))
-
-        if nb_of_filters_to_remove >= nb_channels:
-            nb_of_filters_to_remove = nb_channels - 1
+        _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - self._removal_factor, nb_channels)
 
         # Select prunable filters randomly
         filter_indices = np.arange(len(nb_channels))
