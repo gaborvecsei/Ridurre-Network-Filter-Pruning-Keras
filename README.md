@@ -43,13 +43,13 @@ You will need to define 2 callbacks for the pruning:
         ```python
         def finetune_model(my_model, initial_epoch, finetune_epochs):
                 my_model.fit(x_train,
-                         y_train,
-                         32,
-                         epochs=finetune_epochs,
-                         validation_data=(x_test, y_test),
-                         callbacks=callbacks,
-                         initial_epoch=initial_epoch,
-                         verbose=1)
+                             y_train,
+                             32,
+                             epochs=finetune_epochs,
+                             validation_data=(x_test, y_test),
+                             callbacks=callbacks,
+                             initial_epoch=initial_epoch,
+                             verbose=1)
         ```
 
 #### Pruning
