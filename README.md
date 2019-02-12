@@ -2,7 +2,7 @@
 
 TODO...
 
-<img src="art/pruning_framework.png" width="400" alt="pruning framework diagram">
+<img src="art/pruning_framework.png" alt="pruning framework diagram">
 
 
 ## Install
