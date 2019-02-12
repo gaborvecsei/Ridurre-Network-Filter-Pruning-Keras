@@ -2,6 +2,9 @@
 
 TODO...
 
+<img src="art/pruning_framework.png" width="400" alt="pruning framework diagram">
+
+
 ## Install
 
 - Install packages inside `requirements.txt`
