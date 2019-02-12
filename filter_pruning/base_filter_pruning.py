@@ -11,7 +11,7 @@ import numpy as np
 
 
 class BasePruning:
-    _FUZZ_EPSILON = 1e-7
+    _FUZZ_EPSILON = 1e-5
 
     def __init__(self, model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
@@ -127,12 +127,20 @@ class BasePruning:
         nb_of_values_to_modify = np.random.randint(0, len(x) - 1)
         modify_indices = indices[:nb_of_values_to_modify]
         # Modify the selected elements of the vector
-        x[modify_indices] += BasePruning._FUZZ_EPSILON
+        x[modify_indices] += BasePruning._epsilon()
 
     @staticmethod
     def _apply_fuzz(x: np.ndarray):
         for i in range(len(x)):
             BasePruning._apply_fuzz_to_vector(x[i])
+
+    @staticmethod
+    def _epsilon():
+        return BasePruning._FUZZ_EPSILON
+
+    @staticmethod
+    def set_epsilon(e: float):
+        BasePruning._FUZZ_EPSILON = e
 
     @abc.abstractmethod
     def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:

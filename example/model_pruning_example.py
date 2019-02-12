@@ -53,7 +53,7 @@ model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH
 callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
 
 # Train the model
-FIRST_TRAIN_EPOCHS = 100
+FIRST_TRAIN_EPOCHS = 20
 BATCH_SIZE = 32
 STEPS_PER_EPOCH = len(x_train) // BATCH_SIZE
 

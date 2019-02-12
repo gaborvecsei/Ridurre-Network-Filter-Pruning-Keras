@@ -1,4 +1,4 @@
-# Filter Pruning in Deep Convolutional Networks
+# [WIP] Filter Pruning in Deep Convolutional Networks
 
 TODO...
 
@@ -98,7 +98,7 @@ For an example just take a look at the [`RandomFilterPruning`](/filter_pruning/r
 
 ## Papers
 
-*[1]* [Demystifying Neural Network Filter Pruning](https://openreview.net/pdf?id=rJffBWBtoX)
-
-*[2]* [Filter Level Pruning Based on Similar Feature Extraction for
+*[1]* [Filter Level Pruning Based on Similar Feature Extraction for
 Convolutional Neural Networks](https://www.jstage.jst.go.jp/article/transinf/E101.D/4/E101.D_2017EDL8248/_pdf)
+
+*[2]* [Demystifying Neural Network Filter Pruning](https://openreview.net/pdf?id=rJffBWBtoX)
