@@ -2,7 +2,7 @@ import abc
 import re
 import tempfile
 from typing import Tuple, Callable
-
+import traceback
 import kerassurgeon
 import tensorflow as tf
 from keras import backend as K
@@ -47,6 +47,9 @@ class BasePruning:
 
             # Computing statistics
             nb_of_pruned_filters = sum(pruning_dict.values())
+            if nb_of_pruned_filters == 0:
+                print("Number of pruned filters == 0, so pruning is stopped")
+                break
             print("Number of pruned filters at this step: {0}".format(nb_of_pruned_filters))
             pruning_percent = self._compute_pruning_percent(model)
             print("Network is pruned from the original state, by {0} %".format(pruning_percent * 100))
@@ -88,7 +91,12 @@ class BasePruning:
                 if re.match(self._prunable_layers_regex, layer.name):
                     nb_pruned_filters = self.run_pruning_for_conv2d_layer(layer, surgeon)
                     pruning_dict[layer.name] = nb_pruned_filters
-        new_model = surgeon.operate()
+        try:
+            new_model = surgeon.operate()
+        except Exception as e:
+            print("Could not complete pruning step because got Exception: {0}".format(e))
+            print(traceback.format_exc())
+            return model, {k: 0 for k, _ in pruning_dict.items()}
         return new_model, pruning_dict
 
     @staticmethod
