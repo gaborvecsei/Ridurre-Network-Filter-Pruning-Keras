@@ -56,8 +56,9 @@ class BasePruning:
             self._clean_up_after_pruning(model)
             model = self._load_back_saved_model(custom_objects_inside_model)
             self._model_compile_fn(model)
-            self._model_finetune_fn(model, self._current_nb_of_epochs,
-                                    self._current_nb_of_epochs + self._nb_finetune_epochs)
+            if self._model_finetune_fn is not None:
+                self._model_finetune_fn(model, self._current_nb_of_epochs,
+                                        self._current_nb_of_epochs + self._nb_finetune_epochs)
             self._current_nb_of_epochs += self._nb_finetune_epochs
 
             # Stopping conditions

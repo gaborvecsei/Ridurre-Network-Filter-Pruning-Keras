@@ -31,7 +31,7 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         height, width, input_channels, nb_channels = layer_weight_mtx.shape
 
         # Initialize KMeans
-        nb_of_clusters = self._calculate_number_of_channels_to_keep(self._clustering_factor, nb_channels)
+        nb_of_clusters, _ = self._calculate_number_of_channels_to_keep(self._clustering_factor, nb_channels)
         kmeans = cluster.KMeans(nb_of_clusters, "k-means++")
 
         # Fit with the flattened weight matrix
