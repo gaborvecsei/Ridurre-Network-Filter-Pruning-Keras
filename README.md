@@ -111,6 +111,7 @@ operations should be pruned in the same manner
 - Different pruning factors for channels with different number of filters
 - More pruning solutions
 - Do not depend on kerassurgeon as I only use the channel delete function
+- Pruning factor scheduler
 
 ## Papers
 
