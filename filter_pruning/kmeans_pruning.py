@@ -1,4 +1,5 @@
 from typing import Callable
+
 import kerassurgeon
 import numpy as np
 from keras import models
@@ -8,21 +9,21 @@ from filter_pruning import base_filter_pruning
 
 
 class KMeansFilterPruning(base_filter_pruning.BasePruning):
-    def __init__(self, clustering_factor: float,
+    def __init__(self,
+                 clustering_factor: float,
                  model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
                  maximum_prune_iterations: int = None,
                  maximum_pruning_percent: float = 0.9,
                  nb_trained_for_epochs: int = 0):
-        super().__init__(model_compile_fn=model_compile_fn,
+        super().__init__(pruning_factor=clustering_factor,
+                         model_compile_fn=model_compile_fn,
                          model_finetune_fn=model_finetune_fn,
                          nb_finetune_epochs=nb_finetune_epochs,
                          nb_trained_for_epochs=nb_trained_for_epochs,
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
-
-        self._clustering_factor = clustering_factor
 
     def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
         # Extract the Conv2D layer kernel weight matrix
@@ -30,7 +31,7 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         height, width, input_channels, nb_channels = layer_weight_mtx.shape
 
         # Initialize KMeans
-        nb_of_clusters, _ = self._calculate_number_of_channels_to_keep(self._clustering_factor, nb_channels)
+        nb_of_clusters, _ = self._calculate_number_of_channels_to_keep(self._pruning_factor, nb_channels)
         kmeans = cluster.KMeans(nb_of_clusters, "k-means++")
 
         # Fit with the flattened weight matrix

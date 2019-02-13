@@ -8,21 +8,21 @@ from filter_pruning import base_filter_pruning
 
 
 class RandomFilterPruning(base_filter_pruning.BasePruning):
-    def __init__(self, removal_factor: float,
+    def __init__(self,
+                 removal_factor: float,
                  model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
                  maximum_prune_iterations: int = None,
                  maximum_pruning_percent: float = 0.9,
                  nb_trained_for_epochs: int = 0):
-        super().__init__(model_compile_fn=model_compile_fn,
+        super().__init__(pruning_factor=removal_factor,
+                         model_compile_fn=model_compile_fn,
                          model_finetune_fn=model_finetune_fn,
                          nb_finetune_epochs=nb_finetune_epochs,
                          nb_trained_for_epochs=nb_trained_for_epochs,
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
-
-        self._removal_factor = removal_factor
 
     def run_pruning_for_conv2d_layer(self, layer: layers.Layer, surgeon: kerassurgeon.Surgeon) -> int:
         # Extract the Conv2D layer kernel weight matrix
@@ -35,7 +35,7 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
             return 0
 
         # Calculate how much filters should be removed
-        _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - self._removal_factor, nb_channels)
+        _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - self._pruning_factor, nb_channels)
 
         # Select prunable filters randomly
         filter_indices = np.arange(nb_channels)

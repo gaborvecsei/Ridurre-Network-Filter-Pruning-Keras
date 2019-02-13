@@ -1,25 +1,29 @@
 import abc
 import re
 import tempfile
-from typing import Tuple, Callable
 import traceback
+from typing import Tuple, Callable
+
 import kerassurgeon
+import numpy as np
 import tensorflow as tf
 from keras import backend as K
 from keras import models
-import numpy as np
 
 
 class BasePruning:
     _FUZZ_EPSILON = 1e-5
 
-    def __init__(self, model_compile_fn: Callable[[models.Model], None],
+    def __init__(self,
+                 pruning_factor: float,
+                 model_compile_fn: Callable[[models.Model], None],
                  model_finetune_fn: Callable[[models.Model, int, int], None],
                  nb_finetune_epochs: int,
                  nb_trained_for_epochs: int,
                  maximum_prune_iterations: int,
                  maximum_pruning_percent: float):
 
+        self._pruning_factor = pruning_factor
         self._tmp_model_file_name = tempfile.NamedTemporaryFile().name
 
         self._model_compile_fn = model_compile_fn
@@ -35,12 +39,16 @@ class BasePruning:
         # TODO: select a subset of layers to prune
         self._prunable_layers_regex = ".*"
 
-    def run_pruning(self, model: models.Model, custom_objects_inside_model: dict = None) -> Tuple[models.Model, int]:
+    def run_pruning(self, model: models.Model, prune_factor_scheduler_fn: Callable[[float, int], float] = None,
+                    custom_objects_inside_model: dict = None) -> Tuple[models.Model, int]:
         self._original_number_of_filters = self._count_number_of_filters(model)
 
         pruning_iteration = 0
 
         while True:
+            if prune_factor_scheduler_fn is not None:
+                self._pruning_factor = prune_factor_scheduler_fn(self._pruning_factor, pruning_iteration)
+
             # Pruning step
             print("Running filter pruning {0}".format(pruning_iteration))
             model, pruning_dict = self._prune(model)
@@ -146,10 +154,6 @@ class BasePruning:
     @staticmethod
     def _epsilon():
         return BasePruning._FUZZ_EPSILON
-
-    @staticmethod
-    def set_epsilon(e: float):
-        BasePruning._FUZZ_EPSILON = e
 
     @staticmethod
     def _calculate_number_of_channels_to_keep(keep_factor: float, nb_of_channels: int) -> Tuple[int, int]:
