@@ -38,7 +38,7 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
         _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - self._removal_factor, nb_channels)
 
         # Select prunable filters randomly
-        filter_indices = np.arange(len(nb_channels))
+        filter_indices = np.arange(nb_channels)
         np.random.shuffle(filter_indices)
         filter_indices = list(filter_indices[:nb_of_filters_to_remove])
 
