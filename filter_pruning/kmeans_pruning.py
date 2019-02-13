@@ -57,16 +57,17 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
             print("Randomly adding {0} channels for pruning".format(diff))
             np.random.shuffle(channel_indices_to_keep)
             for i in range(diff):
-                channel_indices_to_prune.append(channel_indices_to_keep[i])
+                channel_indices_to_prune.append(channel_indices_to_keep.pop(i))
         elif len(channel_indices_to_keep) < nb_of_clusters:
             print("Number of selected channels for pruning is greater than expected. Leaving too few channels.")
             diff = nb_of_clusters - len(channel_indices_to_keep)
             print("Discarding {0} pruneable channels".format(diff))
-            channel_indices_to_prune = channel_indices_to_prune[:diff]
+            for i in range(diff):
+                channel_indices_to_keep.append(channel_indices_to_prune.pop(i))
 
-        if len(channel_indices_to_prune) != nb_of_clusters:
+        if len(channel_indices_to_keep) != nb_of_clusters:
             raise ValueError(
-                "Number of clusters {0} is not equal with the selected"
+                "Number of clusters {0} is not equal with the selected "
                 "pruneable channels {1}".format(nb_of_clusters, len(channel_indices_to_prune)))
 
         # Remove "unnecessary" filters from layer
