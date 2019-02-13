@@ -51,17 +51,18 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         channel_indices_to_keep = list(channel_indices_to_keep)
 
         # TODO: These things can happen because of the KMeans clustering, this needs more investigation
-        if len(channel_indices_to_prune) > nb_of_clusters:
-            print("Number of selected channels for pruning is greater then number of clusters")
-            print("Discarding a few pruneable channels")
-            channel_indices_to_prune = channel_indices_to_prune[:nb_of_clusters]
-        elif len(channel_indices_to_prune) < nb_of_clusters:
-            print("Number of selected channels for pruning is less than the number of clusters")
-            diff = nb_of_clusters - len(channel_indices_to_prune)
+        if len(channel_indices_to_keep) > nb_of_clusters:
+            print("Number of selected channels for pruning is less than expected")
+            diff = len(channel_indices_to_keep) - nb_of_clusters
             print("Randomly adding {0} channels for pruning".format(diff))
             np.random.shuffle(channel_indices_to_keep)
             for i in range(diff):
                 channel_indices_to_prune.append(channel_indices_to_keep[i])
+        elif len(channel_indices_to_keep) < nb_of_clusters:
+            print("Number of selected channels for pruning is greater than expected. Leaving too few channels.")
+            diff = nb_of_clusters - len(channel_indices_to_keep)
+            print("Discarding {0} pruneable channels".format(diff))
+            channel_indices_to_prune = channel_indices_to_prune[:diff]
 
         if len(channel_indices_to_prune) != nb_of_clusters:
             raise ValueError(
