@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Optional
 
 import kerassurgeon
 import numpy as np
@@ -11,7 +11,7 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
     def __init__(self,
                  removal_factor: float,
                  model_compile_fn: Callable[[models.Model], None],
-                 model_finetune_fn: Callable[[models.Model, int, int], None],
+                 model_finetune_fn: Optional[Callable[[models.Model, int, int], None]],
                  nb_finetune_epochs: int,
                  maximum_prune_iterations: int = None,
                  maximum_pruning_percent: float = 0.9,

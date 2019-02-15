@@ -2,7 +2,7 @@ import abc
 import re
 import tempfile
 import traceback
-from typing import Tuple, Callable, Union, List
+from typing import Tuple, Callable, Union, List, Optional
 
 import kerassurgeon
 import numpy as np
@@ -17,7 +17,7 @@ class BasePruning:
     def __init__(self,
                  pruning_factor: float,
                  model_compile_fn: Callable[[models.Model], None],
-                 model_finetune_fn: Callable[[models.Model, int, int], None],
+                 model_finetune_fn: Optional[Callable[[models.Model, int, int], None]],
                  nb_finetune_epochs: int,
                  nb_trained_for_epochs: int,
                  maximum_prune_iterations: int,
@@ -100,8 +100,8 @@ class BasePruning:
             raise ValueError("While defining pruning bins, channel numbers list "
                              "should contain 1 more items than the pruning factor list")
 
-        self._channel_number_bins = channel_number_bins
-        self._pruning_factors_for_channel_bins = pruning_factors_for_bins
+        self._channel_number_bins = np.asarray(channel_number_bins).astype(int)
+        self._pruning_factors_for_channel_bins = np.asarray(pruning_factors_for_bins).astype(float)
 
     def _get_pruning_factor_based_on_prune_bins(self, nb_channels: int) -> float:
         for i, pruning_factor in enumerate(self._pruning_factors_for_channel_bins):
