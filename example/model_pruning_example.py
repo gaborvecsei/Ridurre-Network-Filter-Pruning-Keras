@@ -43,17 +43,33 @@ print("Test shape: X {0}, y: {1}".format(x_test.shape, y_test.shape))
 # Data Augmentation with Data Generator
 data_generator = ImageDataGenerator(horizontal_flip=True, vertical_flip=True, rotation_range=20)
 
+
 # Create callbacks
+def lr_schedule(epoch):
+    lr = 1e-3
+    if epoch > 180:
+        lr *= 0.5e-3
+    elif epoch > 160:
+        lr *= 1e-3
+    elif epoch > 120:
+        lr *= 1e-2
+    elif epoch > 80:
+        lr *= 1e-1
+    return lr
+
+
+lr_scheduler = callbacks.LearningRateScheduler(lr_schedule)
+lr_reducer = callbacks.ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5, min_lr=0.5e-6)
 tensorboard_callback = callbacks.TensorBoard(log_dir=str(TRAIN_LOGS_FOLDER_PATH))
 model_complexity_param = model_complexity.ModelParametersCallback(TRAIN_LOGS_FOLDER_PATH, verbose=1)
 model_checkpoint_callback = callbacks.ModelCheckpoint(str(TRAIN_LOGS_FOLDER_PATH) + "/model_{epoch:02d}.h5",
                                                       save_best_only=False,
                                                       save_weights_only=False,
                                                       verbose=1)
-callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback]
+callbacks = [tensorboard_callback, model_complexity_param, model_checkpoint_callback, lr_scheduler, lr_reducer]
 
 # Train the model
-FIRST_TRAIN_EPOCHS = 20
+FIRST_TRAIN_EPOCHS = 200
 BATCH_SIZE = 32
 STEPS_PER_EPOCH = len(x_train) // BATCH_SIZE
 
@@ -79,8 +95,8 @@ pruning = filter_pruning.KMeansFilterPruning(0.9,
                                              compile_model,
                                              finetune_model,
                                              nb_finetune_epochs=5,
-                                             maximum_pruning_percent=0.85,
-                                             maximum_prune_iterations=10,
+                                             maximum_pruning_percent=0.6,
+                                             maximum_prune_iterations=7,
                                              nb_trained_for_epochs=FIRST_TRAIN_EPOCHS)
 model, last_epoch_number = pruning.run_pruning(model)
 
