@@ -2,7 +2,7 @@ from typing import Callable
 
 import kerassurgeon
 import numpy as np
-from keras import models
+from keras import models, layers
 from sklearn import cluster, metrics
 
 from filter_pruning import base_filter_pruning
@@ -25,13 +25,12 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
 
-    def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
-        # Extract the Conv2D layer kernel weight matrix
-        layer_weight_mtx = layer.get_weights()[0]
-        height, width, input_channels, nb_channels = layer_weight_mtx.shape
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
+                                     layer_weight_mtx) -> int:
+        _, _, _, nb_channels = layer_weight_mtx.shape
 
         # Initialize KMeans
-        nb_of_clusters, _ = self._calculate_number_of_channels_to_keep(self._pruning_factor, nb_channels)
+        nb_of_clusters, _ = self._calculate_number_of_channels_to_keep(pruning_factor, nb_channels)
         kmeans = cluster.KMeans(nb_of_clusters, "k-means++")
 
         # Fit with the flattened weight matrix

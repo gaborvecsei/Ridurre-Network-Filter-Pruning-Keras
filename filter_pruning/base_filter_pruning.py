@@ -2,13 +2,13 @@ import abc
 import re
 import tempfile
 import traceback
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Union, List
 
 import kerassurgeon
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from keras import models
+from keras import models, layers
 
 
 class BasePruning:
@@ -33,6 +33,9 @@ class BasePruning:
         self._current_nb_of_epochs = nb_trained_for_epochs
         self._maximum_prune_iterations = maximum_prune_iterations
         self._maximum_pruning_percent = maximum_pruning_percent
+
+        self._channel_number_bins = None
+        self._pruning_factors_for_channel_bins = None
 
         self._original_number_of_filters = -1
 
@@ -91,13 +94,40 @@ class BasePruning:
         print("Pruning stopped.")
         return model, self._current_nb_of_epochs
 
+    def define_prune_bins(self, channel_number_bins: Union[List[int], np.ndarray],
+                          pruning_factors_for_bins: Union[List[float], np.ndarray]):
+        if (len(channel_number_bins) - 1) != len(pruning_factors_for_bins):
+            raise ValueError("While defining pruning bins, channel numbers list "
+                             "should contain 1 more items than the pruning factor list")
+
+        self._channel_number_bins = channel_number_bins
+        self._pruning_factors_for_channel_bins = pruning_factors_for_bins
+
+    def _get_pruning_factor_based_on_prune_bins(self, nb_channels: int) -> float:
+        for i, pruning_factor in enumerate(self._pruning_factors_for_channel_bins):
+            min_channel_number = self._channel_number_bins[i]
+            max_channel_number = self._channel_number_bins[i + 1]
+            if min_channel_number <= nb_channels < max_channel_number:
+                return self._pruning_factors_for_channel_bins[i]
+        # If we did not found any match we will return with the default pruning factor value
+        print("No entry was found for a layer with channel number {0}, "
+              "so returning pruning factor {1}".format(nb_channels, self._pruning_factor))
+        return self._pruning_factor
+
     def _prune(self, model: models.Model) -> Tuple[models.Model, dict]:
         surgeon = kerassurgeon.Surgeon(model, copy=True)
         pruning_dict = dict()
         for layer in model.layers:
             if layer.__class__.__name__ == "Conv2D":
                 if re.match(self._prunable_layers_regex, layer.name):
-                    nb_pruned_filters = self.run_pruning_for_conv2d_layer(layer, surgeon)
+                    layer_weight_mtx = layer.get_weights()[0]
+                    pruning_factor = self._pruning_factor
+                    if self._pruning_factors_for_channel_bins is not None:
+                        pruning_factor = self._get_pruning_factor_based_on_prune_bins(layer_weight_mtx.shape[-1])
+                    nb_pruned_filters = self.run_pruning_for_conv2d_layer(pruning_factor,
+                                                                          layer,
+                                                                          surgeon,
+                                                                          layer_weight_mtx)
                     pruning_dict[layer.name] = nb_pruned_filters
         try:
             new_model = surgeon.operate()
@@ -173,5 +203,6 @@ class BasePruning:
         return new_nb_of_channels, nb_channels_to_remove
 
     @abc.abstractmethod
-    def run_pruning_for_conv2d_layer(self, layer, surgeon: kerassurgeon.Surgeon) -> int:
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
+                                     layer_weight_mtx) -> int:
         raise NotImplementedError

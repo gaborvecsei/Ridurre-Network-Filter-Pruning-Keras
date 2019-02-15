@@ -24,10 +24,9 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
 
-    def run_pruning_for_conv2d_layer(self, layer: layers.Layer, surgeon: kerassurgeon.Surgeon) -> int:
-        # Extract the Conv2D layer kernel weight matrix
-        layer_weight_mtx = layer.get_weights()[0]
-        height, width, input_channels, nb_channels = layer_weight_mtx.shape
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
+                                     layer_weight_mtx) -> int:
+        _, _, _, nb_channels = layer_weight_mtx.shape
 
         # If there is only a single filter left, then do not prune it
         if nb_channels == 1:
@@ -35,7 +34,7 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
             return 0
 
         # Calculate how much filters should be removed
-        _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - self._pruning_factor, nb_channels)
+        _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - pruning_factor, nb_channels)
 
         # Select prunable filters randomly
         filter_indices = np.arange(nb_channels)
