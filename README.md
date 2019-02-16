@@ -10,11 +10,10 @@ pruning methods without any struggle.
 
 ## Install
 
+`pip install ridurre`
+
 - Install packages inside `requirements.txt`
     - `pip install -r requirements.txt`
-- Install the `filter_pruning` package
-    - `python setup.py install`
-    - `pip install git+https://github.com/gaborvecsei/Network-Filter-Pruning-Keras.git`
 
 ## Usage
 
@@ -70,7 +69,7 @@ You will need to define 2 callbacks for the pruning:
 You will need to select which pruning method you would like to use. In this example I will use the KMeans pruning
 
 ```python
-import filter_pruning
+import ridurre
 
 # Create the model
 model = build_model(...)
@@ -90,7 +89,7 @@ def finetune_my_model(model, initial_epoch, finetune_epochs):
     model.fit(..., epochs=finetune_epochs, initial_epoch=initial_epoch)
 
 # We can start pruning
-pruning = filter_pruning.KMeansFilterPruning(0.9,
+pruning = ridurre.KMeansFilterPruning(0.9,
                                              compile_my_model,
                                              finetune_my_model,
                                              6,
