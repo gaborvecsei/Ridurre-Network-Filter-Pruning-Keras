@@ -50,7 +50,6 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
         channel_indices_to_prune = list(channel_indices.difference(channel_indices_to_keep))
         channel_indices_to_keep = list(channel_indices_to_keep)
 
-        # TODO: These things can happen because of the KMeans clustering, this needs more investigation
         if len(channel_indices_to_keep) > nb_of_clusters:
             print("Number of selected channels for pruning is less than expected")
             diff = len(channel_indices_to_keep) - nb_of_clusters
