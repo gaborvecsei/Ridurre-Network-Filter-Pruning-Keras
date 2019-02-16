@@ -15,6 +15,19 @@ pruning methods without any struggle.
 - Install packages inside `requirements.txt`
     - `pip install -r requirements.txt`
 
+## Example Results
+
+These results were achieved with the [example](example/model_pruning_example.py) provided:
+
+- *Cifar10* dataset
+- *ResNetV1*
+- KMeans filter pruning
+    - Clustering factor: `0.9` (which can be considered as an aggressive pruning)
+
+<img src="art/training.png" width="600" alt="training with pruning">
+
+<img src="art/pruning.png" width="600" alt="pruning">
+
 ## Usage
 
 ### Define you own pruning method
@@ -120,3 +133,13 @@ operations should be pruned in the same manner
 Convolutional Neural Networks](https://www.jstage.jst.go.jp/article/transinf/E101.D/4/E101.D_2017EDL8248/_pdf)
 
 *[2]* [Demystifying Neural Network Filter Pruning](https://openreview.net/pdf?id=rJffBWBtoX)
+
+## About
+
+Gábor Vecsei
+
+- [Website](https://gaborvecsei.com)
+- [Personal Blog](https://gaborvecsei.wordpress.com/)
+- [LinkedIn](https://www.linkedin.com/in/gaborvecsei)
+- [Twitter](https://twitter.com/GAwesomeBE)
+- [Github](https://github.com/gaborvecsei)
