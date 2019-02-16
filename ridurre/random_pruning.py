@@ -1,10 +1,9 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
-import kerassurgeon
 import numpy as np
 from keras import models, layers
 
-from filter_pruning import base_filter_pruning
+from ridurre import base_filter_pruning
 
 
 class RandomFilterPruning(base_filter_pruning.BasePruning):
@@ -24,14 +23,13 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
 
-    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
-                                     layer_weight_mtx) -> int:
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, layer_weight_mtx) -> List[int]:
         _, _, _, nb_channels = layer_weight_mtx.shape
 
         # If there is only a single filter left, then do not prune it
         if nb_channels == 1:
             print("Layer {0} has only a single filter left. No pruning is applied.".format(layer.name))
-            return 0
+            return []
 
         # Calculate how much filters should be removed
         _, nb_of_filters_to_remove = self._calculate_number_of_channels_to_keep(1.0 - pruning_factor, nb_channels)
@@ -41,7 +39,4 @@ class RandomFilterPruning(base_filter_pruning.BasePruning):
         np.random.shuffle(filter_indices)
         filter_indices = list(filter_indices[:nb_of_filters_to_remove])
 
-        # Remove selected filters from layer
-        surgeon.add_job("delete_channels", layer, channels=filter_indices)
-
-        return nb_of_filters_to_remove
+        return filter_indices

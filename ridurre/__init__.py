@@ -12,10 +12,10 @@
 *****************************************************
 """
 
-from filter_pruning.base_filter_pruning import BasePruning
-from filter_pruning.kmeans_pruning import KMeansFilterPruning
-from filter_pruning.random_pruning import RandomFilterPruning
-from filter_pruning.ultimate_prune import UltimatePruning
+from ridurre.base_filter_pruning import BasePruning
+from ridurre.kmeans_pruning import KMeansFilterPruning
+from ridurre.random_pruning import RandomFilterPruning
+from ridurre.ultimate_prune import UltimatePruning
 
 __version__ = "0.0.2"
 __author__ = "Gabor Vecsei"

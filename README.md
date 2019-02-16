@@ -1,6 +1,9 @@
-# [WIP] Filter Pruning in Deep Convolutional Networks
+# Ridurre - Filter Pruning in Deep Convolutional Networks
 
-TODO...
+Pruning is the process when we try to shrink a network by removing the not so significant/redundant filters.
+
+This package is a mini-framework which you can easily use on your existing models and also you can define your own
+pruning methods without any struggle.
 
 <img src="art/pruning_framework.png" alt="pruning framework diagram">
 
@@ -20,7 +23,7 @@ TODO...
 You can make your own pruning method by creating a new class which has the parent `BasePruning`. There is only 1 thing
 you should take care and that the implementation of the `run_pruning_for_conv2d_layer` function.
 
-For an example just take a look at the [`RandomFilterPruning`](/filter_pruning/random_pruning.py) code.
+For an example just take a look at the [`RandomFilterPruning`](/ridurre/random_pruning.py) code.
 
 ### Use an already existing method
 

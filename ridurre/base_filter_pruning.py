@@ -124,11 +124,12 @@ class BasePruning:
                     pruning_factor = self._pruning_factor
                     if self._pruning_factors_for_channel_bins is not None:
                         pruning_factor = self._get_pruning_factor_based_on_prune_bins(layer_weight_mtx.shape[-1])
-                    nb_pruned_filters = self.run_pruning_for_conv2d_layer(pruning_factor,
-                                                                          layer,
-                                                                          surgeon,
-                                                                          layer_weight_mtx)
-                    pruning_dict[layer.name] = nb_pruned_filters
+                    filter_indices_to_prune = self.run_pruning_for_conv2d_layer(pruning_factor,
+                                                                                layer,
+                                                                                layer_weight_mtx)
+                    # Remove selected filters from layer
+                    surgeon.add_job("delete_channels", layer, channels=filter_indices_to_prune)
+                    pruning_dict[layer.name] = len(filter_indices_to_prune)
         try:
             new_model = surgeon.operate()
         except Exception as e:
@@ -203,6 +204,5 @@ class BasePruning:
         return new_nb_of_channels, nb_channels_to_remove
 
     @abc.abstractmethod
-    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
-                                     layer_weight_mtx) -> int:
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, layer_weight_mtx) -> List[int]:
         raise NotImplementedError

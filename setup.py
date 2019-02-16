@@ -22,7 +22,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='filter_pruning',
+    name='ridurre',
     version='0.0.2',
     description='Keras model convoltuianl filter pruning',
     long_description=long_description,
@@ -38,6 +38,6 @@ setup(
         'Topic :: Software Development',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3'],
-    keywords='pruning keras vecsei gaborvecsei filter-pruning convolution deep-learning machine-learning',
+    keywords='pruning keras vecsei gaborvecsei filter-pruning convolution deep-learning machine-learning prune ridurre',
     packages=find_packages(),
 )

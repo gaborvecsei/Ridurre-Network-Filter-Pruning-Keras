@@ -5,9 +5,9 @@ import numpy as np
 from keras import datasets, utils, callbacks, optimizers, losses
 from keras.preprocessing.image import ImageDataGenerator
 
-import filter_pruning
+import ridurre
 from example.cifar_10_resnet import resnet
-from filter_pruning import model_complexity
+from ridurre import model_complexity
 
 TRAIN_LOGS_FOLDER_PATH = Path("./train_logs")
 if TRAIN_LOGS_FOLDER_PATH.is_dir():
@@ -75,13 +75,13 @@ def finetune_model(my_model, initial_epoch, finetune_epochs):
                            steps_per_epoch=STEPS_PER_EPOCH)
 
 
-pruning = filter_pruning.KMeansFilterPruning(0.9,
-                                             compile_model,
-                                             finetune_model,
-                                             nb_finetune_epochs=5,
-                                             maximum_pruning_percent=0.85,
-                                             maximum_prune_iterations=10,
-                                             nb_trained_for_epochs=FIRST_TRAIN_EPOCHS)
+pruning = ridurre.KMeansFilterPruning(0.9,
+                                      compile_model,
+                                      finetune_model,
+                                      nb_finetune_epochs=5,
+                                      maximum_pruning_percent=0.85,
+                                      maximum_prune_iterations=10,
+                                      nb_trained_for_epochs=FIRST_TRAIN_EPOCHS)
 model, last_epoch_number = pruning.run_pruning(model)
 
 # Train again for a reasonable number of epochs (no always necessary)

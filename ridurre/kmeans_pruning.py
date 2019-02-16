@@ -1,11 +1,10 @@
-from typing import Callable, Optional
+from typing import Callable, Optional, List
 
-import kerassurgeon
 import numpy as np
 from keras import models, layers
 from sklearn import cluster, metrics
 
-from filter_pruning import base_filter_pruning
+from ridurre import base_filter_pruning
 
 
 class KMeansFilterPruning(base_filter_pruning.BasePruning):
@@ -25,8 +24,7 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
                          maximum_prune_iterations=maximum_prune_iterations,
                          maximum_pruning_percent=maximum_pruning_percent)
 
-    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, surgeon: kerassurgeon.Surgeon,
-                                     layer_weight_mtx) -> int:
+    def run_pruning_for_conv2d_layer(self, pruning_factor: float, layer: layers.Conv2D, layer_weight_mtx) -> List[int]:
         _, _, _, nb_channels = layer_weight_mtx.shape
 
         # Initialize KMeans
@@ -69,7 +67,4 @@ class KMeansFilterPruning(base_filter_pruning.BasePruning):
                 "Number of clusters {0} is not equal with the selected "
                 "pruneable channels {1}".format(nb_of_clusters, len(channel_indices_to_prune)))
 
-        # Remove "unnecessary" filters from layer
-        surgeon.add_job("delete_channels", layer, channels=channel_indices_to_prune)
-
-        return len(channel_indices_to_prune)
+        return channel_indices_to_prune
